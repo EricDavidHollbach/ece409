@@ -13,6 +13,12 @@ public class Main {
         if (q.isProbablePrime(Integer.MAX_VALUE) && p.subtract(BigInteger.ONE).mod(q) == BigInteger.ZERO) {
             System.out.println("q is a prime factor of p - 1");
         }
+
+        for (int i = 1; i < q.intValue(); i++) {
+            if (q.pow(i).mod(p) == BigInteger.ZERO) {
+                System.out.printf("g has order %d%n", i);
+            }
+        }
         return;
     }
 }
