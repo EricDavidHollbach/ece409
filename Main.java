@@ -16,7 +16,11 @@ public class Main {
             System.out.println("q is a prime factor of p - 1");
         }
 
-        // TODO check if g is order q
+        // TODO check that q is the *smallest* integer s.t. g^q = 1
+
+        if (g.modPow(q, p).equals(BigInteger.ONE)) {
+            System.out.println("g has order q");
+        }
 
         return;
     }
