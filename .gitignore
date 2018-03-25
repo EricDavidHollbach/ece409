@@ -24,3 +24,6 @@ hs_err_pid*
 # eclipse stuff
 *.classpath
 *.project
+
+# maven build
+target
