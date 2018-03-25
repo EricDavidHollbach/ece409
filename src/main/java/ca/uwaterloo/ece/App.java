@@ -39,6 +39,16 @@ public class App
         BigInteger pk3 = g.modPow(sk3, p);
 
         BigInteger m = pk1.xor(pk2).xor(BigInteger.ONE);
+        String message = m.toString(16);
+        message += "80";
+
+        for (int i = 0; i < 14; i++) {
+            message += "00";
+        }
+
+        message += "01";
+
+        m = new BigInteger(message, 16);
 
         DSS user1 = new DSS(sk1, pk1);
         BigInteger[] sig1 = user1.sign(m);
