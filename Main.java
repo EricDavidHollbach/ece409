@@ -1,5 +1,3 @@
-package ca.uwaterloo.ece;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -8,10 +6,7 @@ import java.lang.ProcessBuilder;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-import org.python.core.PyObject;
-import org.python.util.PythonInterpreter;
-
-public class App 
+public class Main
 {
     private static final BigInteger p = new BigInteger("168199388701209853920129085113302407023173962717160229197318545484823101018386724351964316301278642143567435810448472465887143222934545154943005714265124445244247988777471773193847131514083030740407543233616696550197643519458134465700691569680905568000063025830089599260400096259430726498683087138415465107499"); 
     private static final BigInteger q = new BigInteger("959452661475451209325433595634941112150003865821");
@@ -43,60 +38,29 @@ public class App
         BigInteger sk3 = BigInteger.ZERO.setBit(159).subtract(BigInteger.TEN);
         BigInteger pk3 = g.modPow(sk3, p);
 
-        // Attempt 1.
-        // BigInteger m = pk1.xor(pk2).xor(BigInteger.ONE);
+        // BigInteger m = new BigInteger(pk1.toString(16) + pk2.toString(16) + "00000001", 16);
 
-        // byte[] message = new byte[1152];
+        // DSS user1 = new DSS(sk1, pk1);
+        // BigInteger[] sig1 = user1.sign(m);
+        // System.out.println(user1.verify(m, sig1));
 
-        // message[0] = 0x60;
+        // DSS user2 = new DSS(null, pk1);
+        // System.out.println(user2.verify(m, sig1));
 
-        // for (int i = 1; i < message.length - 1; i++) {
-        //     message[i] = 0x00;
-        // }
+        BigInteger m = new BigInteger(pk2.toString(16) + pk3.toString(16) + "00000001", 16);
 
-        // message[message.length - 1] = 0x01;
-
-        // Digest224 digest224 = new Digest224();
-        // byte[] digest = digest224.digest(message);
-
-        // System.out.println(Hex.toHexString(digest));
-
-        // Attempt 2.
-        // StringWriter writer = new StringWriter(); //ouput will be stored here
-
-        // ScriptEngineManager manager = new ScriptEngineManager();
-        // ScriptContext context = new SimpleScriptContext();
-
-        // context.setWriter(writer); //configures output redirection
-        // ScriptEngine engine = manager.getEngineByName("python");
-        // engine.eval(new FileReader("hello.py"), context);
-        // System.out.println(writer.toString()); 
-
-        // Attempt 3.
-        // PythonInterpreter interpreter = new PythonInterpreter();
-        // interpreter.exec("import sys\nsys.path.append('/Users/edhollba/Desktop/ece409-project1')\nimport sha3-224");
-        // // execute a function that takes a string and returns a string
-        // PyObject someFunc = interpreter.get("main");
-        // PyObject result = someFunc.__call__();
-        // String realResult = (String) result.__tojava__(String.class);
-        // System.out.println(realResult);
-        BigInteger m = null;
-
-        DSS user1 = new DSS(sk1, pk1);
-        BigInteger[] sig1 = user1.sign(m);
-        System.out.println(user1.verify(m, sig1));
-
-        DSS user2 = new DSS(null, pk1);
-        System.out.println(user2.verify(m, sig1));
+        DSS test = new DSS(sk2, pk2);
+        BigInteger[] sig = test.sign(m);
+        System.out.println(test.verify(m, sig));
 
         return;
     }
 
-    private static BigInteger sha3_224(BigInteger message) {
+    private static String sha3_224(String message) {
         String digest = "";
 
         try {
-            Process p = new ProcessBuilder("python", "sha3-224.py", message.toHexString()).start();
+            Process p = new ProcessBuilder("python", "sha3-224.py", message).start();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
@@ -104,13 +68,13 @@ public class App
             String line;
             while ((line = br.readLine()) != null) {
                 int value = Integer.valueOf(line);
-                message += Integer.toHexString(value);
+                digest += Integer.toHexString(value);
             }
         } catch (IOException ex) {
             System.out.println(ex);
         }
 
-        return new BigInteger(digest, 16);
+        return digest;
     }
 
     private static class DSS {
@@ -130,19 +94,22 @@ public class App
                 k = new BigInteger(q.bitLength(), rnd);
             }
 
-            BigInteger r = g.modPow(k, p).mod(q);
-            BigInteger s = ssh3_224(m).subtract(x.multiply(r)).multiply(k.modInverse(q)).mod(q);
+            BigInteger h_m = new BigInteger(sha3_224(m.toString(16)), 16);
 
-            if (ssh3_224(m).mod(q).equals(x.multiply(r).add(k.multiply(s)).mod(q))) {
+            BigInteger r = g.modPow(k, p).mod(q);
+            BigInteger s = h_m.subtract(x.multiply(r)).multiply(k.modInverse(q)).mod(q);
+
+            if (h_m.mod(q).equals(x.multiply(r).add(k.multiply(s)).mod(q))) {
                 return new BigInteger[] {r, s};
             }
 
+            System.out.println("Error generating a valid signature");
             return null;
         }
 
         protected boolean verify(BigInteger m, BigInteger[] sig) {
             if (sig.length != 2) {
-                System.err.println("Wrong number of arguments!! Must provide (r, s) to be verified..");
+                System.err.println("Wrong number of arguments! Must provide (r, s) to be verified..");
             }
 
             for (BigInteger rs : sig) {
@@ -152,13 +119,15 @@ public class App
                 }
             }
 
+            BigInteger h_m = new BigInteger(sha3_224(m.toString(16)), 16);
+
             BigInteger r = sig[0];
             BigInteger s = sig[1];
 
-            BigInteger u = ssh3_224(m).multiply(s.modInverse(q)).mod(q);
+            BigInteger u = h_m.multiply(s.modInverse(q)).mod(q);
             BigInteger v = r.negate().multiply(s.modInverse(q)).mod(q);
 
-            if (g.modPow(u, q).multiply(y.modPow(v, q)).mod(q).equals(r)) {
+            if (g.modPow(u, q).multiply(y.modPow(v, q)).equals(r)) {
                 return true;
             }
 
