@@ -1,10 +1,15 @@
 package ca.uwaterloo.ece;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+import java.lang.Process;
+import java.lang.ProcessBuilder;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-import org.bouncycastle.jcajce.provider.digest.SHA3.Digest224;
-import org.bouncycastle.util.encoders.Hex;
+import org.python.core.PyObject;
+import org.python.util.PythonInterpreter;
 
 public class App 
 {
@@ -38,27 +43,74 @@ public class App
         BigInteger sk3 = BigInteger.ZERO.setBit(159).subtract(BigInteger.TEN);
         BigInteger pk3 = g.modPow(sk3, p);
 
-        BigInteger m = pk1.xor(pk2).xor(BigInteger.ONE);
-        String message = m.toString(16);
-        message += "80";
+        // Attempt 1.
+        // BigInteger m = pk1.xor(pk2).xor(BigInteger.ONE);
 
-        for (int i = 0; i < 14; i++) {
-            message += "00";
-        }
+        // byte[] message = new byte[1152];
 
-        message += "01";
+        // message[0] = 0x60;
 
-        m = new BigInteger(message, 16);
+        // for (int i = 1; i < message.length - 1; i++) {
+        //     message[i] = 0x00;
+        // }
+
+        // message[message.length - 1] = 0x01;
+
+        // Digest224 digest224 = new Digest224();
+        // byte[] digest = digest224.digest(message);
+
+        // System.out.println(Hex.toHexString(digest));
+
+        // Attempt 2.
+        // StringWriter writer = new StringWriter(); //ouput will be stored here
+
+        // ScriptEngineManager manager = new ScriptEngineManager();
+        // ScriptContext context = new SimpleScriptContext();
+
+        // context.setWriter(writer); //configures output redirection
+        // ScriptEngine engine = manager.getEngineByName("python");
+        // engine.eval(new FileReader("hello.py"), context);
+        // System.out.println(writer.toString()); 
+
+        // Attempt 3.
+        // PythonInterpreter interpreter = new PythonInterpreter();
+        // interpreter.exec("import sys\nsys.path.append('/Users/edhollba/Desktop/ece409-project1')\nimport sha3-224");
+        // // execute a function that takes a string and returns a string
+        // PyObject someFunc = interpreter.get("main");
+        // PyObject result = someFunc.__call__();
+        // String realResult = (String) result.__tojava__(String.class);
+        // System.out.println(realResult);
+        BigInteger m = null;
 
         DSS user1 = new DSS(sk1, pk1);
         BigInteger[] sig1 = user1.sign(m);
+        System.out.println(user1.verify(m, sig1));
 
         DSS user2 = new DSS(null, pk1);
         System.out.println(user2.verify(m, sig1));
 
-        // System.out.println("SHA3-224 = " + Hex.toHexString(digest));
-
         return;
+    }
+
+    private static BigInteger sha3_224(BigInteger message) {
+        String digest = "";
+
+        try {
+            Process p = new ProcessBuilder("python", "sha3-224.py", message.toHexString()).start();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+
+            int i = 0;
+            String line;
+            while ((line = br.readLine()) != null) {
+                int value = Integer.valueOf(line);
+                message += Integer.toHexString(value);
+            }
+        } catch (IOException ex) {
+            System.out.println(ex);
+        }
+
+        return new BigInteger(digest, 16);
     }
 
     private static class DSS {
@@ -79,14 +131,9 @@ public class App
             }
 
             BigInteger r = g.modPow(k, p).mod(q);
+            BigInteger s = ssh3_224(m).subtract(x.multiply(r)).multiply(k.modInverse(q)).mod(q);
 
-            Digest224 digest224 = new Digest224();
-            byte[] digest = digest224.digest(m.toByteArray());
-
-            BigInteger h_m = (new BigInteger(digest)).mod(q);
-            BigInteger s = h_m.subtract(x.multiply(r)).multiply(k.modInverse(q)).mod(q);
-
-            if (h_m.mod(q).equals(x.multiply(r).add(k.multiply(s)).mod(q))) {
+            if (ssh3_224(m).mod(q).equals(x.multiply(r).add(k.multiply(s)).mod(q))) {
                 return new BigInteger[] {r, s};
             }
 
@@ -108,12 +155,7 @@ public class App
             BigInteger r = sig[0];
             BigInteger s = sig[1];
 
-            Digest224 digest224 = new Digest224();
-            byte[] digest = digest224.digest(m.toByteArray());
-
-            BigInteger h_m = (new BigInteger(digest)).mod(q);
-
-            BigInteger u = h_m.multiply(s.modInverse(q)).mod(q);
+            BigInteger u = ssh3_224(m).multiply(s.modInverse(q)).mod(q);
             BigInteger v = r.negate().multiply(s.modInverse(q)).mod(q);
 
             if (g.modPow(u, q).multiply(y.modPow(v, q)).mod(q).equals(r)) {
