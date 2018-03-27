@@ -7,3 +7,8 @@ Project 1
 run ```javac Main.java```
 
 run ```java Main```
+
+# report
+
++ graphs
++ analysis

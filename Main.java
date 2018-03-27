@@ -52,30 +52,32 @@ public class Main
         System.out.println("--------------------part (b)--------------------");
         System.out.println("User 1 generate Sig1:");
 
-        BigInteger m = new BigInteger(pk1.toString(16) + pk2.toString(16) + "00000001", 16);
-        System.out.println("m = 0x" + m.toString(16));
+        BigInteger m1 = new BigInteger(pk1.toString(2) + pk2.toString(2) + "01", 2);
+        System.out.println("m = 0x" + m1.toString(16));
 
         System.out.println("x = 0x" + sk1.toString(16));
         System.out.println("y = 0x" + pk1.toString(16));
 
         DSS user1 = new DSS(sk1, pk1);
-        BigInteger[] sig1 = user1.sign(m);
+        BigInteger[] sig1 = user1.sign(m1);
 
         System.out.println("User 2 verify Sig1 from user 1:");
 
         DSS user2_verify = new DSS(null, pk1);
-        user2_verify.verify(m, sig1);
+        user2_verify.verify(m1, sig1);
 
         System.out.println("User 2 verify Sig1 from user 1:");
 
-        m = new BigInteger(pk2.toString(16) + pk3.toString(16) + "00000001", 16);
-        System.out.println("m = 0x" + m.toString(16));
+        BigInteger m2 = new BigInteger(pk2.toString(2) + pk3.toString(2) + "01", 2);
+        System.out.println("m = 0x" + m2.toString(16));
 
         System.out.println("x = 0x" + sk2.toString(16));
         System.out.println("y = 0x" + pk2.toString(16));
 
         DSS user2_sign = new DSS(sk2, pk2);
-        BigInteger[] sig2 = user2_sign.sign(m);
+        BigInteger[] sig2 = user2_sign.sign(m2);
+
+        System.out.println("--------------------part (c)--------------------");
 
         return;
     }
