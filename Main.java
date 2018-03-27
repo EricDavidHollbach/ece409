@@ -61,12 +61,12 @@ public class Main
         DSS user1 = new DSS(sk1, pk1);
         BigInteger[] sig1 = user1.sign(m1);
 
-        System.out.println("User 2 verify Sig1 from user 1:");
+        System.out.println("User 2 verify Sig1:");
 
         DSS user2_verify = new DSS(null, pk1);
         user2_verify.verify(m1, sig1);
 
-        System.out.println("User 2 verify Sig1 from user 1:");
+        System.out.println("User 2 generate Sig2:");
 
         BigInteger m2 = new BigInteger(pk2.toString(2) + pk3.toString(2) + "01", 2);
         System.out.println("m = 0x" + m2.toString(16));
