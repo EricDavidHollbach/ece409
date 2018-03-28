@@ -25,8 +25,8 @@ public class Main
         if (q.isProbablePrime(Integer.MAX_VALUE) && p.subtract(BigInteger.ONE).mod(q).equals(BigInteger.ZERO)) {
             System.out.println("q is a prime factor of p - 1");
         }
-
-        // TODO use MultiplicativeOrder to check whether the order of g under GF(p) is q
+        
+        verifyMultiplicativeOrder(args);
 
         BigInteger sk1 = new BigInteger("432398415306986194693973996870836079581453988813");
         BigInteger pk1 = new BigInteger("49336018324808093534733548840411752485726058527829630668967480568854756416567496216294919051910148686186622706869702321664465094703247368646506821015290302480990450130280616929226917246255147063292301724297680683401258636182185599124131170077548450754294083728885075516985144944984920010138492897272069257160");
@@ -110,6 +110,38 @@ public class Main
         System.out.println("nonce2 = 0x" + nonce2.toString(16));
 
         return;
+    }
+    
+    private static void verifyMultiplicativeOrder(String args[]) {
+    	if (args == null || args.length == 0) {
+        	System.out.println("NONE");
+
+    		// Skip verification to save time
+    		return;
+    	}
+    	
+    	// Factor p - 1 and find LCM of multiplicative inverse of the factors
+        if (args[0].equals("bonus")) {
+        	System.out.println("BONUS");
+        	if (MultiplicativeOrder.findMultiplicativeInverse(g, p).compareTo(q) == 0) {
+        		System.out.println("q is the multiplicative order of g under GF(p)");
+        		return;
+        	}
+        	
+        // Brute force
+        } else if (args[0].equals("normal")) {
+        	System.out.println("NORMAL");
+
+        	BigInteger qIndex = q;
+        	while (q.compareTo(BigInteger.ZERO) > 0) {
+        		qIndex = qIndex.subtract(BigInteger.ONE);
+        		if (g.modPow(qIndex, p).compareTo(BigInteger.ONE) == 0) {
+        			System.out.println("q is the multiplicative order of g under GF(p)");
+        			return;
+        		}
+        	}
+        }
+    	System.out.println("q is not the multiplicative order of g under GF(p)");
     }
 
     private static class DSS {
@@ -196,6 +228,8 @@ public class Main
         String digest = "";
 
         try {
+        	// Absolute path file. JRE on one machine cannot find python.exe added to PATH.
+        	// Process p = new ProcessBuilder("C:\\Users\\Raymond Zhuang\\AppData\\Local\\Programs\\Python\\Python36-32\\python.exe", "sha3-224.py", message).start();
             Process p = new ProcessBuilder("python", "sha3-224.py", message).start();
 
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
