@@ -52,7 +52,7 @@ public class Main
         System.out.println("--------------------part (b)--------------------");
         System.out.println("User 1 generate Sig1:");
 
-        BigInteger m1 = new BigInteger(pk1.toString(2) + pk2.toString(2) + "01", 2);
+        BigInteger m1 = new BigInteger(pk1.toString(16) + pk2.toString(16) + "01", 16);
         System.out.println("m = 0x" + m1.toString(16));
 
         System.out.println("x = 0x" + sk1.toString(16));
@@ -68,7 +68,7 @@ public class Main
 
         System.out.println("User 2 generate Sig2:");
 
-        BigInteger m2 = new BigInteger(pk2.toString(2) + pk3.toString(2) + "01", 2);
+        BigInteger m2 = new BigInteger(pk2.toString(16) + pk3.toString(16) + "01", 16);
         System.out.println("m = 0x" + m2.toString(16));
 
         System.out.println("x = 0x" + sk2.toString(16));
@@ -78,6 +78,36 @@ public class Main
         BigInteger[] sig2 = user2_sign.sign(m2);
 
         System.out.println("--------------------part (c)--------------------");
+        SecureRandom rnd = new SecureRandom();
+        BigInteger nonce1, nonce2, t1, t2;
+
+        BigInteger mask = BigInteger.ZERO.setBit(216).subtract(BigInteger.ONE);
+
+        while (true) {
+            nonce1 = new BigInteger(128, rnd);
+
+            String preImage = sha3_224("01") + m1.toString(16) + nonce1.toString(16);
+            t1 = new BigInteger(sha3_224(preImage), 16);
+
+            if (t1.and(mask).bitLength() == 192) {
+                break;
+            }
+        }
+
+        System.out.println("nonce1 = 0x" + nonce1.toString(16));
+
+        while (true) {
+            nonce2 = new BigInteger(128, rnd);
+
+            String preImage = sha3_224("01") + m1.toString(16) + nonce1.toString(16);
+            t2 = new BigInteger(sha3_224(preImage), 16);
+
+            if (t2.and(mask).bitLength() == 192) {
+                break;
+            }
+        }
+
+        System.out.println("nonce2 = 0x" + nonce2.toString(16));
 
         return;
     }
