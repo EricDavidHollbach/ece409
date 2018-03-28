@@ -32,7 +32,7 @@ public class MultiplicativeOrder {
 
 			// Divide modulo1 by one factor
 			BigInteger Mi = modulo1.divide(primeExp.prime.pow((int) primeExp.exponent));
-			BigInteger multiInv = base.modPow(Mi,modulo);
+			BigInteger multiInv = base.modPow(Mi, modulo);
 
 			// If it does not equate to 1, continue modPow with the factor until it's 1
 			while (multiInv.compareTo(ONE) > 0) {
