@@ -83,6 +83,11 @@ public class Main
 
         BigInteger mask = BigInteger.ZERO.setBit(216).subtract(BigInteger.ONE);
 
+        long start, end;
+
+        System.gc();
+        start = System.nanoTime();
+
         while (true) {
             nonce1 = new BigInteger(128, rnd);
 
@@ -94,12 +99,18 @@ public class Main
             }
         }
 
+        end = System.nanoTime();
+
         System.out.println("nonce1 = 0x" + nonce1.toString(16));
+        System.out.printf("took %f s%n", (end - start)*1e-9);
+
+        System.gc();
+        start = System.nanoTime();
 
         while (true) {
             nonce2 = new BigInteger(128, rnd);
 
-            String preImage = sha3_224("01") + m1.toString(16) + nonce1.toString(16);
+            String preImage = sha3_224("01") + m2.toString(16) + nonce2.toString(16);
             t2 = new BigInteger(sha3_224(preImage), 16);
 
             if (t2.and(mask).bitLength() == 192) {
@@ -107,7 +118,10 @@ public class Main
             }
         }
 
+        end = System.nanoTime();
+
         System.out.println("nonce2 = 0x" + nonce2.toString(16));
+        System.out.printf("took %f s%n", (end - start)*1e-9);
 
         return;
     }
